@@ -26,6 +26,13 @@ def _patch_buildscript_env(**kwargs):
     return env
 
 def rust_binary(name, **kwargs):
+    deps = kwargs.pop("deps", [])
+    os_deps = kwargs.pop("os_deps", {})
+    named_deps = kwargs.pop("named_deps", {})
+    os_named_deps = kwargs.pop("os_named_deps", {})
+    deps = _merge_os_deps(deps, os_deps)
+    named_deps = _merge_os_named_deps(named_deps, os_named_deps)
+    kwargs.update(deps = deps, named_deps = named_deps)
     # Set the crate name in the environment
     crate_name = kwargs.get("crate")
     env = kwargs.get("env", {})
@@ -37,6 +44,13 @@ def rust_binary(name, **kwargs):
     cargo.rust_binary(name = name, **kwargs)
 
 def rust_library(name, **kwargs):
+    deps = kwargs.pop("deps", [])
+    os_deps = kwargs.pop("os_deps", {})
+    named_deps = kwargs.pop("named_deps", {})
+    os_named_deps = kwargs.pop("os_named_deps", {})
+    deps = _merge_os_deps(deps, os_deps)
+    named_deps = _merge_os_named_deps(named_deps, os_named_deps)
+    kwargs.update(deps = deps, named_deps = named_deps)
     # Set the crate name in the environment
     crate_name = kwargs.get("crate")
     env = kwargs.get("env", {})
@@ -47,9 +61,69 @@ def rust_library(name, **kwargs):
     kwargs.update(rustc_flags=rustc_flags)
     cargo.rust_library(name = name, **kwargs)
 
+def rust_test(name, **kwargs):
+    deps = kwargs.pop("deps", [])
+    os_deps = kwargs.pop("os_deps", {})
+    named_deps = kwargs.pop("named_deps", {})
+    os_named_deps = kwargs.pop("os_named_deps", {})
+    deps = _merge_os_deps(deps, os_deps)
+    named_deps = _merge_os_named_deps(named_deps, os_named_deps)
+    kwargs.update(deps = deps, named_deps = named_deps)
+    # Set the crate name in the environment
+    crate_name = kwargs.get("crate")
+    env = kwargs.get("env", {})
+    env.update(CARGO_CRATE_NAME=crate_name)
+    kwargs.update(env=env)
+    # Set build profile flags
+    rustc_flags = _set_profile_flag(**kwargs)
+    kwargs.update(rustc_flags=rustc_flags)
+    cargo.rust_test(name = name, **kwargs)
+
 def buildscript_run(name, **kwargs):
     # Patch build script environment
     env = kwargs.get("env", {})
     env = _patch_buildscript_env(env=env)
     kwargs.update(env=env)
     __buildscript_run__(name = name, **kwargs)
+
+def _merge_os_deps(default_deps, os_deps):
+    if not os_deps:
+        return default_deps
+    base = list(default_deps)
+    select_map = {"DEFAULT": base}
+    for os_key, extras in os_deps.items():
+        select_map[_platform_label(os_key)] = base + list(extras)
+    return select(select_map)
+
+def _merge_os_named_deps(default_named, os_named_deps):
+    if not os_named_deps:
+        return default_named
+    base = dict(default_named)
+    os_keys = set()
+    for per_os in os_named_deps.values():
+        os_keys.update(per_os.keys())
+
+    def named_for(os_key):
+        merged = dict(base)
+        for alias, per_os in os_named_deps.items():
+            if os_key in per_os:
+                merged[alias] = per_os[os_key]
+        return merged
+
+    select_map = {"DEFAULT": base}
+    for os_key in os_keys:
+        select_map[_platform_label(os_key)] = named_for(os_key)
+
+    return select(select_map)
+
+def _platform_label(os_key):
+    mapping = {
+        # Map OS keys to canonical prelude constraint labels so `select()`
+        # matches repos that define platforms with `prelude//os/constraints:*`.
+        "linux": "prelude//os/constraints:linux",
+        "macos": "prelude//os/constraints:macos",
+        "windows": "prelude//os/constraints:windows",
+    }
+    if os_key in mapping:
+        return mapping[os_key]
+    fail("Unsupported OS key %r. Expected one of: %s" % (os_key, ", ".join(sorted(mapping.keys()))))
