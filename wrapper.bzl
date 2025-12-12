@@ -118,8 +118,10 @@ def _merge_os_named_deps(default_named, os_named_deps):
 
 def _platform_label(os_key):
     mapping = {
-        "linux": "prelude//os:linux",
-        "macos": "prelude//os:macos",
-        "windows": "prelude//os:windows",
+        # Map OS keys to canonical prelude constraint labels so `select()`
+        # matches repos that define platforms with `prelude//os/constraints:*`.
+        "linux": "prelude//os/constraints:linux",
+        "macos": "prelude//os/constraints:macos",
+        "windows": "prelude//os/constraints:windows",
     }
     return mapping.get(os_key, os_key)
