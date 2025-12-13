@@ -1,0 +1,120 @@
+load("@prelude//toolchains:cxx.bzl", "system_cxx_toolchain")
+load("@prelude//toolchains:genrule.bzl", "system_genrule_toolchain")
+load(
+    "@prelude//toolchains:python.bzl",
+    "system_python_bootstrap_toolchain",
+    "system_python_toolchain",
+)
+load("@prelude//toolchains:rust.bzl", "system_rust_toolchain")
+
+# We override the demo toolchains so we can avoid forcing `-fuse-ld=lld`.
+# The bundled demo cxx toolchain uses clang++ and adds `-fuse-ld=lld` on Linux,
+# but some environments don't have lld installed. We also guard Linux cross
+# compiler selection by OS so this file works on macOS/Windows too.
+system_cxx_toolchain(
+    name = "cxx",
+    compiler = select({
+        "prelude//os/constraints:linux": select({
+            "prelude//cpu/constraints:arm64": "aarch64-linux-gnu-gcc",
+            "prelude//cpu/constraints:x86_32": "i686-linux-gnu-gcc",
+            "DEFAULT": "gcc",
+        }),
+        "prelude//os/constraints:macos": "clang",
+        "prelude//os/constraints:windows": select({
+            "prelude//abi/constraints:gnu": "gcc",
+            "DEFAULT": "cl",
+        }),
+        "DEFAULT": "cc",
+    }),
+    # Keep `g++` as the C++ compiler on Linux so the prelude doesn't inject
+    # `-fuse-ld=lld` (lld isn't guaranteed to exist). Other OSes use their
+    # native compilers.
+    cxx_compiler = select({
+        "prelude//os/constraints:linux": select({
+            "prelude//cpu/constraints:arm64": "aarch64-linux-gnu-g++",
+            "prelude//cpu/constraints:x86_32": "i686-linux-gnu-g++",
+            "DEFAULT": "g++",
+        }),
+        "prelude//os/constraints:macos": "clang++",
+        "prelude//os/constraints:windows": select({
+            "prelude//abi/constraints:gnu": "g++",
+            "DEFAULT": "cl",
+        }),
+        "DEFAULT": "c++",
+    }),
+    linker = select({
+        "prelude//os/constraints:linux": select({
+            "prelude//cpu/constraints:arm64": "aarch64-linux-gnu-g++",
+            "prelude//cpu/constraints:x86_32": "i686-linux-gnu-g++",
+            "DEFAULT": "g++",
+        }),
+        "prelude//os/constraints:macos": "clang++",
+        "prelude//os/constraints:windows": select({
+            # Use Rust's bundled lld-link instead of MSVC link.exe to avoid
+            # link.exe's nested response file limitation (common with Rust + Buck).
+            "prelude//abi/constraints:msvc": select({
+                "prelude//cpu/constraints:arm64": "buckal/config/toolchains/lld-link-aarch64.bat",
+                "prelude//cpu/constraints:x86_32": "buckal/config/toolchains/lld-link-i686.bat",
+                "prelude//cpu/constraints:x86_64": "buckal/config/toolchains/lld-link-x86_64.bat",
+                "DEFAULT": "buckal/config/toolchains/lld-link.bat",
+            }),
+            # GNU targets must use a GNU-like driver; lld-link uses MSVC flag syntax.
+            "prelude//abi/constraints:gnu": "buckal/config/toolchains/g++-x86_64-gnu-sysroot.bat",
+            "DEFAULT": "buckal/config/toolchains/lld-link.bat",
+        }),
+        "DEFAULT": "c++",
+    }),
+    # Buck prelude's system C++ toolchain injects `-fuse-ld=lld` into the
+    # linker wrapper. Some environments don't ship `ld.lld`,
+    # so append `-fuse-ld=bfd` to override it for Linux targets.
+    link_flags = select({
+        "prelude//os/constraints:linux": ["-fuse-ld=bfd"],
+        "DEFAULT": [],
+    }),
+    visibility = ["PUBLIC"],
+)
+
+# Buck prelude only maps a small set of CPU constraints to Rust triples by
+# default. We provide an explicit mapping so `--target-platforms` works for
+# x86_32 (i686) and OS-specific triples.
+system_rust_toolchain(
+    name = "rust",
+    rustc_target_triple = select({
+        "prelude//os/constraints:linux": select({
+            "prelude//cpu/constraints:arm64": "aarch64-unknown-linux-gnu",
+            "prelude//cpu/constraints:x86_32": "i686-unknown-linux-gnu",
+            "DEFAULT": "x86_64-unknown-linux-gnu",
+        }),
+        "prelude//os/constraints:macos": select({
+            "prelude//cpu/constraints:arm64": "aarch64-apple-darwin",
+            "DEFAULT": "x86_64-apple-darwin",
+        }),
+        "prelude//os/constraints:windows": select({
+            "prelude//abi/constraints:gnu": "x86_64-pc-windows-gnu",
+            "prelude//abi/constraints:msvc": select({
+                "prelude//cpu/constraints:arm64": "aarch64-pc-windows-msvc",
+                "prelude//cpu/constraints:x86_32": "i686-pc-windows-msvc",
+                "DEFAULT": "x86_64-pc-windows-msvc",
+            }),
+            "DEFAULT": "x86_64-pc-windows-msvc",
+        }),
+        "DEFAULT": "x86_64-unknown-linux-gnu",
+    }),
+    visibility = ["PUBLIC"],
+)
+
+system_python_bootstrap_toolchain(
+    name = "python_bootstrap",
+    visibility = ["PUBLIC"],
+)
+
+system_python_toolchain(
+    name = "python",
+    visibility = ["PUBLIC"],
+)
+
+system_genrule_toolchain(
+    name = "genrule",
+    visibility = ["PUBLIC"],
+)
+
