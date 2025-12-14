@@ -50,12 +50,21 @@ system_cxx_toolchain(
         }),
         "prelude//os/constraints:macos": "clang++",
         "prelude//os/constraints:windows": select({
-            # MSVC targets: rely on Buck2 prelude's `msvc_tools`, which wraps
-            # link.exe to flatten nested @response files (common with Rust + Buck).
-            "prelude//abi/constraints:msvc": "link.exe",
+            # MSVC targets: use Rust's bundled lld-link for non-x86_64 targets.
+            # This avoids relying on prelude's `msvc_tools` paths (which currently
+            # assume x64-hosted MSVC bin/lib layouts).
+            "prelude//abi/constraints:msvc": select({
+                "prelude//cpu/constraints:arm64": "buckal/config/toolchains/lld-link-aarch64.bat",
+                "prelude//cpu/constraints:x86_32": "buckal/config/toolchains/lld-link-i686.bat",
+                "DEFAULT": "link.exe",
+            }),
             # GNU targets must use a GNU-like driver; link.exe uses MSVC flag syntax.
             "prelude//abi/constraints:gnu": "buckal/config/toolchains/g++-x86_64-gnu-sysroot.bat",
-            "DEFAULT": "link.exe",
+            "DEFAULT": select({
+                "prelude//cpu/constraints:arm64": "buckal/config/toolchains/lld-link-aarch64.bat",
+                "prelude//cpu/constraints:x86_32": "buckal/config/toolchains/lld-link-i686.bat",
+                "DEFAULT": "link.exe",
+            }),
         }),
         "DEFAULT": "c++",
     }),
