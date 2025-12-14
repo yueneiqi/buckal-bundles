@@ -22,7 +22,7 @@ system_cxx_toolchain(
         "prelude//os/constraints:macos": "clang",
         "prelude//os/constraints:windows": select({
             "prelude//abi/constraints:gnu": "gcc",
-            "DEFAULT": "cl",
+            "DEFAULT": "cl.exe",
         }),
         "DEFAULT": "cc",
     }),
@@ -38,7 +38,7 @@ system_cxx_toolchain(
         "prelude//os/constraints:macos": "clang++",
         "prelude//os/constraints:windows": select({
             "prelude//abi/constraints:gnu": "g++",
-            "DEFAULT": "cl",
+            "DEFAULT": "cl.exe",
         }),
         "DEFAULT": "c++",
     }),
@@ -50,17 +50,12 @@ system_cxx_toolchain(
         }),
         "prelude//os/constraints:macos": "clang++",
         "prelude//os/constraints:windows": select({
-            # Use Rust's bundled lld-link instead of MSVC link.exe to avoid
-            # link.exe's nested response file limitation (common with Rust + Buck).
-            "prelude//abi/constraints:msvc": select({
-                "prelude//cpu/constraints:arm64": "buckal/config/toolchains/lld-link-aarch64.bat",
-                "prelude//cpu/constraints:x86_32": "buckal/config/toolchains/lld-link-i686.bat",
-                "prelude//cpu/constraints:x86_64": "buckal/config/toolchains/lld-link-x86_64.bat",
-                "DEFAULT": "buckal/config/toolchains/lld-link.bat",
-            }),
-            # GNU targets must use a GNU-like driver; lld-link uses MSVC flag syntax.
+            # MSVC targets: rely on Buck2 prelude's `msvc_tools`, which wraps
+            # link.exe to flatten nested @response files (common with Rust + Buck).
+            "prelude//abi/constraints:msvc": "link.exe",
+            # GNU targets must use a GNU-like driver; link.exe uses MSVC flag syntax.
             "prelude//abi/constraints:gnu": "buckal/config/toolchains/g++-x86_64-gnu-sysroot.bat",
-            "DEFAULT": "buckal/config/toolchains/lld-link.bat",
+            "DEFAULT": "link.exe",
         }),
         "DEFAULT": "c++",
     }),
@@ -117,4 +112,3 @@ system_genrule_toolchain(
     name = "genrule",
     visibility = ["PUBLIC"],
 )
-
