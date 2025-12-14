@@ -2,6 +2,8 @@
 # These are intended for `--target-platforms` and to make `select()`s in
 # buckal-generated rules match on OS/CPU/ABI constraints.
 
+load("@prelude//platforms:defs.bzl", "execution_platform")
+
 platform(
     name = "aarch64-apple-darwin",
     constraint_values = [
@@ -11,13 +13,11 @@ platform(
     visibility = ["PUBLIC"],
 )
 
-platform(
+execution_platform(
     name = "aarch64-pc-windows-msvc",
-    constraint_values = [
-        "prelude//os/constraints:windows",
-        "prelude//cpu/constraints:arm64",
-        "prelude//abi/constraints:msvc",
-    ],
+    cpu_configuration = "prelude//cpu:arm64",
+    os_configuration = "buckal//config/platforms:windows-msvc",
+    use_windows_path_separators = True,
     visibility = ["PUBLIC"],
 )
 
@@ -81,3 +81,11 @@ platform(
     visibility = ["PUBLIC"],
 )
 
+config_setting(
+    name = "windows-msvc",
+    constraint_values = [
+        "prelude//os/constraints:windows",
+        "prelude//abi/constraints:msvc",
+    ],
+    visibility = ["PUBLIC"],
+)
