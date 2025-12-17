@@ -27,6 +27,24 @@ TOOL_CWD: str = os.path.join(os.getcwd(), "")
 def eprint(*args: Any, **kwargs: Any) -> None:
     print(*args, end="\n", file=sys.stderr, flush=True, **kwargs)
 
+def available_parallelism() -> int:
+    # Mirror Rust's `std::thread::available_parallelism()` behavior where
+    # possible (honors CPU affinity on platforms that support it).
+    try:
+        if hasattr(os, "sched_getaffinity"):
+            return max(1, len(os.sched_getaffinity(0)))
+    except Exception:
+        pass
+
+    try:
+        count = os.cpu_count()
+        if isinstance(count, int) and count > 0:
+            return count
+    except Exception:
+        pass
+
+    return 1
+
 
 def cfg_env(rustc_cfg: Path) -> Dict[str, str]:
     with rustc_cfg.open(encoding="utf-8") as f:
@@ -228,6 +246,7 @@ def main() -> None:  # noqa: C901
     env["CARGO_MANIFEST_PATH"] = os.path.abspath(cwd / "Cargo.toml")
 
     env = dict(os.environ, **env)
+    env.setdefault("NUM_JOBS", str(available_parallelism()))
 
     target = env.get("TARGET")
     if target is None:
