@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-import os
 import subprocess
 import sys
 from pathlib import Path
@@ -54,9 +53,38 @@ def _has_machine_flag(args: list[str]) -> bool:
     return False
 
 
+def _parse_machine(args: list[str]) -> tuple[str, list[str]]:
+    machine = ""
+    remaining: list[str] = []
+    i = 0
+    while i < len(args):
+        arg = args[i]
+        if arg == "--machine":
+            if i + 1 >= len(args):
+                raise SystemExit("lld_link.py: --machine requires a value")
+            if machine:
+                raise SystemExit("lld_link.py: --machine specified multiple times")
+            machine = args[i + 1].strip().upper()
+            if not machine:
+                raise SystemExit("lld_link.py: --machine requires a non-empty value")
+            i += 2
+            continue
+        if arg.startswith("--machine="):
+            if machine:
+                raise SystemExit("lld_link.py: --machine specified multiple times")
+            machine = arg.split("=", 1)[1].strip().upper()
+            if not machine:
+                raise SystemExit("lld_link.py: --machine requires a non-empty value")
+            i += 1
+            continue
+        remaining.append(arg)
+        i += 1
+    return machine, remaining
+
+
 def main() -> int:
     argv = sys.argv[1:]
-    machine = os.environ.get("BUCKAL_LLD_LINK_MACHINE", "").strip().upper()
+    machine, argv = _parse_machine(argv)
 
     sysroot = _rust_sysroot()
     host_triple = _rust_host_triple()
