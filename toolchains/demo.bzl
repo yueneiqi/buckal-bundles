@@ -7,6 +7,12 @@
 # above-listed licenses.
 
 load("@buckal//toolchains/cxx:demo_cxx.bzl", "system_demo_cxx_toolchain")
+load("@prelude//toolchains:genrule.bzl", "system_genrule_toolchain")
+load(
+    "@prelude//toolchains:python.bzl",
+    "system_python_bootstrap_toolchain",
+    "system_python_toolchain",
+)
 load("@buckal//toolchains/rust:demo_rust.bzl", "system_demo_rust_toolchain")
 
 def system_demo_toolchains():
@@ -16,3 +22,18 @@ def system_demo_toolchains():
     """
     system_demo_cxx_toolchain()
     system_demo_rust_toolchain()
+
+    system_python_bootstrap_toolchain(
+        name = "python_bootstrap",
+        visibility = ["PUBLIC"],
+    )
+
+    system_python_toolchain(
+        name = "python",
+        visibility = ["PUBLIC"],
+    )
+
+    system_genrule_toolchain(
+        name = "genrule",
+        visibility = ["PUBLIC"],
+    )
