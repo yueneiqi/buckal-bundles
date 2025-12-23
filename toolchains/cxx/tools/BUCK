@@ -1,0 +1,54 @@
+load("@prelude//utils:source_listing.bzl", "source_listing")
+
+oncall("build_infra")
+
+source_listing()
+
+prelude = native
+
+prelude.python_bootstrap_binary(
+    name = "lld_link",
+    main = "lld_link.py",
+    visibility = ["PUBLIC"],
+)
+
+prelude.export_file(
+    name = "lld-link-aarch64.bat",
+    src = "lld-link-aarch64.bat",
+)
+
+prelude.command_alias(
+    name = "lld-link-aarch64",
+    exe = "python",
+    args = ["$(location :lld_link.py)"],
+    env = {
+        "BUCKAL_LLD_LINK_MACHINE": "ARM64",
+    },
+    visibility = ["PUBLIC"],
+)
+
+prelude.export_file(
+    name = "lld-link-i686.bat",
+    src = "lld-link-i686.bat",
+)
+
+prelude.command_alias(
+    name = "lld-link-i686",
+    exe = "python",
+    args = ["$(location :lld_link.py)"],
+    env = {
+        "BUCKAL_LLD_LINK_MACHINE": "X86",
+    },
+    visibility = ["PUBLIC"],
+)
+
+prelude.export_file(
+    name = "g++-x86_64-gnu-sysroot.bat",
+    src = "g++-x86_64-gnu-sysroot.bat",
+)
+
+prelude.command_alias(
+    name = "g++-x86_64-gnu-sysroot",
+    exe = ":g++-x86_64-gnu-sysroot.bat",
+    visibility = ["PUBLIC"],
+)
