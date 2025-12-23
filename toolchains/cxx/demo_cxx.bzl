@@ -6,7 +6,7 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-load("@buckal//config/toolchains/cxx:buckal_cxx_toolchain.bzl", "buckal_system_cxx_toolchain")
+load("@buckal//toolchains/cxx:buckal_cxx_toolchain.bzl", "buckal_system_cxx_toolchain")
 load(
     "@prelude//toolchains:python.bzl",
     "system_python_bootstrap_toolchain",
@@ -66,15 +66,15 @@ def system_demo_cxx_toolchain():
                 # This avoids relying on prelude's `msvc_tools` paths (which currently
                 # assume x64-hosted MSVC bin/lib layouts).
                 "prelude//abi/constraints:msvc": select({
-                    "prelude//cpu/constraints:arm64": "buckal//config/toolchains/cxx/tools:lld-link-aarch64",
-                    "prelude//cpu/constraints:x86_32": "buckal//config/toolchains/cxx/tools:lld-link-i686",
+                    "prelude//cpu/constraints:arm64": "buckal//toolchains/cxx/tools:lld-link-aarch64",
+                    "prelude//cpu/constraints:x86_32": "buckal//toolchains/cxx/tools:lld-link-i686",
                     "DEFAULT": None,
                 }),
                 # GNU targets must use a GNU-like driver; link.exe uses MSVC flag syntax.
-                "prelude//abi/constraints:gnu": "buckal//config/toolchains/cxx/tools:g++-x86_64-gnu-sysroot",
+                "prelude//abi/constraints:gnu": "buckal//toolchains/cxx/tools:g++-x86_64-gnu-sysroot",
                 "DEFAULT": select({
-                    "prelude//cpu/constraints:arm64": "buckal//config/toolchains/cxx/tools:lld-link-aarch64",
-                    "prelude//cpu/constraints:x86_32": "buckal//config/toolchains/cxx/tools:lld-link-i686",
+                    "prelude//cpu/constraints:arm64": "buckal//toolchains/cxx/tools:lld-link-aarch64",
+                    "prelude//cpu/constraints:x86_32": "buckal//toolchains/cxx/tools:lld-link-i686",
                     "DEFAULT": None,
                 }),
             }),

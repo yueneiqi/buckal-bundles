@@ -6,8 +6,8 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-load("@buckal//config/toolchains/cxx:demo_cxx.bzl", "system_demo_cxx_toolchain")
-load("@buckal//config/toolchains/rust:demo_rust.bzl", "system_demo_rust_toolchain")
+load("@buckal//toolchains/cxx:demo_cxx.bzl", "system_demo_cxx_toolchain")
+load("@buckal//toolchains/rust:demo_rust.bzl", "system_demo_rust_toolchain")
 
 def system_demo_toolchains():
     """
