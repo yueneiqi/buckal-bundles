@@ -62,15 +62,15 @@ def system_demo_cxx_toolchain():
                 # This avoids relying on prelude's `msvc_tools` paths (which currently
                 # assume x64-hosted MSVC bin/lib layouts).
                 "prelude//abi/constraints:msvc": select({
-                    "prelude//cpu/constraints:arm64": "buckal/config/toolchains/lld-link-aarch64.bat",
-                    "prelude//cpu/constraints:x86_32": "buckal/config/toolchains/lld-link-i686.bat",
+                    "prelude//cpu/constraints:arm64": "buckal\\config\\toolchains\\lld-link-aarch64.bat",
+                    "prelude//cpu/constraints:x86_32": "buckal\\config\\toolchains\\lld-link-i686.bat",
                     "DEFAULT": "link.exe",
                 }),
                 # GNU targets must use a GNU-like driver; link.exe uses MSVC flag syntax.
-                "prelude//abi/constraints:gnu": "buckal/config/toolchains/g++-x86_64-gnu-sysroot.bat",
+                "prelude//abi/constraints:gnu": "buckal\\config\\toolchains\\g++-x86_64-gnu-sysroot.bat",
                 "DEFAULT": select({
-                    "prelude//cpu/constraints:arm64": "buckal/config/toolchains/lld-link-aarch64.bat",
-                    "prelude//cpu/constraints:x86_32": "buckal/config/toolchains/lld-link-i686.bat",
+                    "prelude//cpu/constraints:arm64": "buckal\\config\\toolchains\\lld-link-aarch64.bat",
+                    "prelude//cpu/constraints:x86_32": "buckal\\config\\toolchains\\lld-link-i686.bat",
                     "DEFAULT": "link.exe",
                 }),
             }),
