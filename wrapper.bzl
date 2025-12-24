@@ -26,13 +26,7 @@ def _patch_buildscript_env(**kwargs):
     return env
 
 def rust_binary(name, **kwargs):
-    deps = kwargs.pop("deps", [])
-    os_deps = kwargs.pop("os_deps", {})
-    named_deps = kwargs.pop("named_deps", {})
-    os_named_deps = kwargs.pop("os_named_deps", {})
-    deps = _merge_os_deps(deps, os_deps)
-    named_deps = _merge_os_named_deps(named_deps, os_named_deps)
-    kwargs.update(deps = deps, named_deps = named_deps)
+    kwargs = _apply_os_deps(kwargs)
     # Set the crate name in the environment
     crate_name = kwargs.get("crate")
     env = kwargs.get("env", {})
@@ -44,13 +38,7 @@ def rust_binary(name, **kwargs):
     cargo.rust_binary(name = name, **kwargs)
 
 def rust_library(name, **kwargs):
-    deps = kwargs.pop("deps", [])
-    os_deps = kwargs.pop("os_deps", {})
-    named_deps = kwargs.pop("named_deps", {})
-    os_named_deps = kwargs.pop("os_named_deps", {})
-    deps = _merge_os_deps(deps, os_deps)
-    named_deps = _merge_os_named_deps(named_deps, os_named_deps)
-    kwargs.update(deps = deps, named_deps = named_deps)
+    kwargs = _apply_os_deps(kwargs)
     # Set the crate name in the environment
     crate_name = kwargs.get("crate")
     env = kwargs.get("env", {})
@@ -62,13 +50,7 @@ def rust_library(name, **kwargs):
     cargo.rust_library(name = name, **kwargs)
 
 def rust_test(name, **kwargs):
-    deps = kwargs.pop("deps", [])
-    os_deps = kwargs.pop("os_deps", {})
-    named_deps = kwargs.pop("named_deps", {})
-    os_named_deps = kwargs.pop("os_named_deps", {})
-    deps = _merge_os_deps(deps, os_deps)
-    named_deps = _merge_os_named_deps(named_deps, os_named_deps)
-    kwargs.update(deps = deps, named_deps = named_deps)
+    kwargs = _apply_os_deps(kwargs)
     # Set the crate name in the environment
     crate_name = kwargs.get("crate")
     env = kwargs.get("env", {})
@@ -85,6 +67,16 @@ def buildscript_run(name, **kwargs):
     env = _patch_buildscript_env(env=env)
     kwargs.update(env=env)
     __buildscript_run__(name = name, **kwargs)
+
+def _apply_os_deps(kwargs):
+    deps = kwargs.pop("deps", [])
+    os_deps = kwargs.pop("os_deps", {})
+    named_deps = kwargs.pop("named_deps", {})
+    os_named_deps = kwargs.pop("os_named_deps", {})
+    deps = _merge_os_deps(deps, os_deps)
+    named_deps = _merge_os_named_deps(named_deps, os_named_deps)
+    kwargs.update(deps = deps, named_deps = named_deps)
+    return kwargs
 
 def _merge_os_deps(default_deps, os_deps):
     if not os_deps:

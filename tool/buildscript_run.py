@@ -28,19 +28,27 @@ def eprint(*args: Any, **kwargs: Any) -> None:
     print(*args, end="\n", file=sys.stderr, flush=True, **kwargs)
 
 def available_parallelism() -> int:
+    """Return the available parallelism, mirroring Rust's std behavior.
+
+    This mirrors Rust's `std::thread::available_parallelism()` semantics by
+    honoring CPU affinity where supported, and falling back to 1 if a reliable
+    count cannot be determined.
+    """
     # Mirror Rust's `std::thread::available_parallelism()` behavior where
     # possible (honors CPU affinity on platforms that support it).
     try:
         if hasattr(os, "sched_getaffinity"):
             return max(1, len(os.sched_getaffinity(0)))
-    except Exception:
+    except (OSError, ValueError):
+        # Fall back to the broader CPU count when affinity is unavailable.
         pass
 
     try:
         count = os.cpu_count()
         if isinstance(count, int) and count > 0:
             return count
-    except Exception:
+    except (NotImplementedError, OSError):
+        # Fall through to the conservative default.
         pass
 
     return 1

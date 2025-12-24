@@ -135,7 +135,11 @@ def _cargo_buildscript_impl(ctx: AnalysisContext) -> list[Provider]:
     # (host CPU count); this config value overrides it when set.
     num_jobs = read_config("buckal", "num_jobs")
     if num_jobs != None:
-        env["NUM_JOBS"] = str(num_jobs)
+        num_jobs_str = str(num_jobs)
+        if num_jobs_str.isdigit():
+            env["NUM_JOBS"] = num_jobs_str
+        # If the config is non-numeric, leave NUM_JOBS unset so the runner
+        # falls back to its default.
 
     if toolchain_info.rustc_target_triple:
         env["TARGET"] = toolchain_info.rustc_target_triple
