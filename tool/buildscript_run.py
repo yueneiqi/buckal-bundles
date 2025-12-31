@@ -312,8 +312,9 @@ def main() -> None:  # noqa: C901
                 relative_path = path[len(TOOL_CWD) :]
                 flags += f"-L{kind}$(abspath {relative_path})\n"
             else:
-                # Disregard link search not located within the build script's out dir.
-                pass
+                # Allow external link search paths (e.g., system libraries like Python)
+                # Use -Clink-arg to ensure it's passed to the linker
+                flags += f"-Clink-arg=-L{path}\n"
             continue
         # *BUCKAL-ONLY* metadata processing
         # See https://doc.rust-lang.org/cargo/reference/build-scripts.html#the-links-manifest-key
