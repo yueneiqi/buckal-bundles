@@ -62,14 +62,17 @@ def main() -> None:
     cargo_env["CARGO_PKG_RUST_VERSION"] = cargo_toml["package"].get("rust-version", "")
     # cargo_env["CARGO_PKG_README"] = cargo_toml["package"].get("readme", "")
 
+    def to_ascii_escaped(value: str) -> str:
+            return value.encode("ascii", "backslashreplace").decode("ascii")
+
     env_flags = ""
     for key, value in cargo_env.items():
         if key == "CARGO_PKG_DESCRIPTION":
             # Escape newlines and quotes in description
             value = value.replace("\n", "\\n").replace('"', '\\"')
-            env_flags += f"--env-set={key}=\"{value}\"\n"
+            env_flags += f"--env-set={key}=\"{to_ascii_escaped(value)}\"\n"
         else:
-            env_flags += f"--env-set={key}={value}\n"
+            env_flags += f"--env-set={key}={to_ascii_escaped(value)}\n"
     args.out_flags.write(env_flags)
 
     if cargo_toml["package"].get("links"):
