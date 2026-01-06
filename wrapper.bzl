@@ -106,6 +106,7 @@ def _merge_os_deps(default_deps, os_deps):
     return selects.apply(default_deps, merge)
 
 def _merge_os_named_deps(default_named, os_named_deps):
+    # os_named_deps is alias-first: {"alias": {"linux": "//:dep", "windows": "//:dep"}}.
     if not os_named_deps:
         return default_named
 
@@ -128,7 +129,7 @@ def _merge_os_named_deps(default_named, os_named_deps):
                 if os_key in per_os:
                     merged = selects.apply(
                         merged,
-                        lambda curr, alias=alias, value=per_os[os_key]: apply_named_dep(curr, alias, value),
+                        lambda curr: apply_named_dep(curr, alias, per_os[os_key]),
                     )
             return merged
 
@@ -150,4 +151,4 @@ def _platform_label(os_key):
     }
     if os_key in mapping:
         return mapping[os_key]
-    fail("Unsupported OS key %r. Expected one of: %s" % (os_key, ", ".join(sorted(mapping.keys()))))
+    fail("Unsupported OS key %s. Expected one of: %s" % (os_key, ", ".join(sorted(mapping.keys()))))

@@ -33,14 +33,18 @@ def available_parallelism() -> int:
     try:
         if hasattr(os, "sched_getaffinity"):
             return max(1, len(os.sched_getaffinity(0)))
-    except Exception:
+    except OSError as ex:
+        # If affinity queries fail or are unsupported, fall back to cpu_count.
+        eprint(f"sched_getaffinity failed; falling back to cpu_count: {ex!r}")
         pass
 
     try:
         count = os.cpu_count()
         if isinstance(count, int) and count > 0:
             return count
-    except Exception:
+    except (OSError, NotImplementedError) as ex:
+        # If cpu_count fails unexpectedly, use a conservative default.
+        eprint(f"cpu_count failed; using default parallelism: {ex!r}")
         pass
 
     return 1

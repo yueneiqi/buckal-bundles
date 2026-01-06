@@ -131,7 +131,7 @@ def _cargo_buildscript_impl(ctx: AnalysisContext) -> list[Provider]:
     env["RUSTC_LINKER"] = "/bin/false"
     env["RUST_BACKTRACE"] = "1"
     # Cargo sets this for build scripts, and some crates (e.g. tikv-jemalloc-sys)
-    # `expect` it to be present. Defaulting is handled in the buildscript runner
+    # expect it to be present. Defaulting is handled in the buildscript runner
     # (host CPU count); this config value overrides it when set.
     num_jobs = read_config("buckal", "num_jobs")
     if num_jobs != None:
