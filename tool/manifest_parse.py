@@ -20,8 +20,9 @@ class Args(NamedTuple):
 def arg_parse() -> Args:
     parser = argparse.ArgumentParser(description="Run Rust build script")
     parser.add_argument("--vendor", type=Path, required=True)
-    # Always write UTF-8 so rustc_action (which assumes UTF-8) can parse the
-    # generated response files on Windows where the locale default is cp1252.
+    # Always write UTF-8 so rustc_action (the Buck2 Rust toolchain action,
+    # which assumes UTF-8 response files) can parse the generated files on
+    # Windows, where the locale default is typically cp1252.
     parser.add_argument("--out-dict", type=argparse.FileType("w", encoding="utf-8"), required=True)
     parser.add_argument("--out-flags", type=argparse.FileType("w", encoding="utf-8"), required=True)
 

@@ -122,13 +122,18 @@ def _merge_os_named_deps(default_named, os_named_deps):
                 return merged
             return selects.apply(value, set_alias)
 
+        def bind_named_dep(alias, value):
+            def apply(curr):
+                return apply_named_dep(curr, alias, value)
+            return apply
+
         def named_for(os_key):
             merged = base_dict
             for alias, per_os in os_named_deps.items():
                 if os_key in per_os:
                     merged = selects.apply(
                         merged,
-                        lambda curr, alias=alias, value=per_os[os_key]: apply_named_dep(curr, alias, value),
+                        bind_named_dep(alias, per_os[os_key]),
                     )
             return merged
 
@@ -150,4 +155,4 @@ def _platform_label(os_key):
     }
     if os_key in mapping:
         return mapping[os_key]
-    fail("Unsupported OS key %r. Expected one of: %s" % (os_key, ", ".join(sorted(mapping.keys()))))
+    fail("Unsupported OS key %s. Expected one of: %s" % (os_key, ", ".join(sorted(mapping.keys()))))
