@@ -36,7 +36,6 @@ def available_parallelism() -> int:
     except OSError as ex:
         # If affinity queries fail or are unsupported, fall back to cpu_count.
         eprint(f"sched_getaffinity failed; falling back to cpu_count: {ex!r}")
-        pass
 
     try:
         count = os.cpu_count()
@@ -45,7 +44,6 @@ def available_parallelism() -> int:
     except (OSError, NotImplementedError) as ex:
         # If cpu_count fails unexpectedly, use a conservative default.
         eprint(f"cpu_count failed; using default parallelism: {ex!r}")
-        pass
 
     return 1
 
@@ -249,7 +247,11 @@ def main() -> None:  # noqa: C901
     # *BUCKAL-ONLY* set manifest path
     env["CARGO_MANIFEST_PATH"] = os.path.abspath(cwd / "Cargo.toml")
 
+    # Merge the current process environment. Values from os.environ take
+    # precedence over values from cfg_env()/extra env files.
     env = dict(os.environ, **env)
+    # NUM_JOBS is only set to available_parallelism() if not already present,
+    # meaning an existing OS-level NUM_JOBS overrides cargo_buildscript.bzl config.
     env.setdefault("NUM_JOBS", str(available_parallelism()))
 
     target = env.get("TARGET")
